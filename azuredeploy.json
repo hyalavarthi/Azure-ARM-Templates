@@ -1,0 +1,879 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+
+      "metadata": {
+        "description": "Resource Group location for all resources."
+      }
+    },
+    "eventHubNameSpace": {
+      "type": "string",
+      "defaultValue": "[concat('ehn-blk','-',parameters('region'),'-',parameters('stagingArea'))]",
+      "metadata": {
+        "description": "Event Hub Name Space"
+      }
+    },
+    "sku_eventHub": {
+      "type": "string",
+      "allowedValues": [ "Basic", "Standard" ],
+      "defaultValue": "Standard",
+      "metadata": {
+        "description": "The messaging tier for service Bus namespace"
+      }
+    },
+    "skuCapacity_eventHub": {
+      "type": "int",
+      "allowedValues": [ 1, 2, 4 ],
+      "defaultValue": 1,
+      "metadata": {
+        "description": "MessagingUnits for premium namespace"
+      }
+    },
+    "eventHubName2go": {
+      "type": "string",
+      "defaultValue": "[concat('eh-2go','-',parameters('region'),'-',parameters('stagingArea'))]",
+      "metadata": {
+        "description": "Name of Event Hub"
+      }
+    },
+    "sharedAccessP": {
+      "type": "string",
+      "defaultValue": "SendAndReceive",
+      "metadata": {
+        "description": "Name for Shared Access Policies"
+      }
+    },
+    "consumerGroupName_eventHub": {
+      "type": "string",
+      "defaultValue": "signalr",
+      "metadata": {
+        "description": "Name of Consumer Group"
+      }
+    },
+
+    "webApplication": {
+      "type": "array",
+      "defaultValue": [
+        "deviceops-service",
+        "provisioning-service",
+        "upload-data-service"
+      ],
+      "metadata": {
+        "description": " Create webapplications which have cu and cc as suffix."
+      }
+    },
+    "webApplicationForNonCloud": {
+      "type": "array",
+      "defaultValue": [
+        "remapping-service",
+        "admin-portal"
+      ],
+      "metadata": {
+        "description": " Create webapplications which don't have cu and cc as suffix."
+      }
+    },
+    "FunctionAppstandardPlan": {
+      "type": "string",
+      "defaultValue": [
+        "upload-data-notifier"
+      ],
+      "metadata": {
+        "description": " Create Function App on S1 Service Plan."
+      }
+    },
+
+    "sku": {
+      "type": "string",
+      "defaultValue": "S1",
+      "allowedValues": [ "S1", "S2", "S3", "P1", "P2", "P1V2", "P2V2", "P3V2" ],
+      "metadata": {
+        "description": "The SKU of App Service Plan, by default standard s1"
+      }
+    },
+    "sku_SignalR": {
+      "type": "string",
+      "defaultValue": "Standard_S1",
+      "allowedValues": [
+        "Free_F1",
+        "Standard_S1"
+      ],
+      "metadata": {
+        "description": "The pricing tier of the SignalR resource."
+      }
+    },
+    "capacity_SignalR": {
+      "type": "int",
+      "defaultValue": 1,
+      "allowedValues": [
+        1,
+        2,
+        5,
+        10,
+        20,
+        50,
+        100
+      ],
+      "metadata": {
+        "description": "The number of SignalR Unit."
+      }
+    },
+    "serviceMode": {
+      "type": "string",
+      "defaultValue": "Classic",
+      "allowedValues": [
+        "Default",
+        "Serverless",
+        "Classic"
+      ],
+      "metadata": {
+        "description": " SignalR Service Mode."
+      }
+    },
+
+    "sku_SVC": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [ "Standard_LRS", "Standard_GRS", "Standard_ZRS", "Standard_RAGRS" ],
+      "metadata": {
+        "description": "Storage Account type"
+      }
+    },
+
+    "sku_data": {
+      "type": "string",
+      "defaultValue": "Premium_LRS",
+      "allowedValues": [ "Premium_LRS", "Premium_GRS", "Premium_ZRS", "Premium_RAGRS" ],
+      "metadata": {
+        "description": "Storage Account type"
+      }
+    },
+    "funappName": {
+      "type": "array",
+      "defaultValue": [
+        "processing-vm-handler",
+        "provisioning",
+        "jobs-statistics",
+        "device-statistics"
+      ],
+      "metadata": {
+        "description": "The name of the function app that you wish to create."
+      }
+    },
+
+    "appInsightsName": {
+      "type": "string",
+      "defaultValue": "[concat('AAI-','2GO-',parameters('region'),'-',parameters('stagingArea'))]",
+      "metadata": {
+        "description": "Specifies Name of Application Insights Name."
+      }
+    },
+
+    "monitorPath": {
+      "type": "string",
+      "defaultValue": "/"
+    },
+    "iotHubName": {
+      "type": "string",
+      "defaultValue": "[concat('aih-','2go-',parameters('region'),'-',parameters('stagingArea'))]",
+      "minLength": 3,
+      "metadata": {
+        "description": "Specifies the name of Iot Hub."
+      }
+    },
+    "skuName": {
+      "type": "string",
+      "defaultValue": "S1",
+      "allowedValues": [ "S1", "S2", "S3", "B1", "B2", "B3", "F1" ],
+      "metadata": {
+        "description": "Specifying the Iothub Pricing Tier."
+      }
+    },
+    "capacityUnits": {
+      "type": "int",
+      "minValue": 1,
+      "maxValue": 1,
+      "defaultValue": 1,
+      "metadata": {
+        "description": "specify the Number Of IotHub Units to create."
+      }
+    },
+    "batchAccountName": {
+      "type": "string",
+      "defaultValue": "[concat('bablk',parameters('region'),parameters('stagingArea'))]",
+      "metadata": {
+        "description": "Create Batch Account "
+      }
+
+    },
+
+    "region": {
+      "type": "string",
+      "metadata": {
+        "description": "Region Name"
+      }
+    },
+    "stagingArea": {
+      "type": "string",
+      "metadata": {
+        "description": "Specifying Staging  Name"
+      }
+    },
+    "functionWorkerRuntime": {
+      "type": "string",
+      "defaultValue": "dotnet",
+      "allowedValues": [ "node", "dotnet", "java" ],
+      "metadata": {
+        "description": "The language worker runtime to load in the function app."
+      }
+    },
+    "signalRName": {
+      "type": "string",
+      "defaultValue": "[concat('msdeviceappcomm',parameters('stagingArea'),'-',parameters('region'))]",
+      "metadata": {
+        "description": "Signal R creation."
+      }
+
+    }
+
+  },
+
+  "variables": {
+    "functionAppName": "[concat(toLower(uniqueString(resourceGroup().id)),'functapp')]",
+    "appServicePlanName": "[concat('ASP-','2GO-',parameters('region'),'-',parameters('stagingArea'))]",
+    "ConsumptionPlanName": "[concat('ASP-','BLK-',parameters('region'),'-',parameters('stagingArea'))]",
+    "storageAccountNameSVC": "[concat('stor2go','svc',parameters('region'),parameters('stagingArea'))]",
+    "storageAccountNameData": "[concat('stor2go','data',parameters('region'),parameters('stagingArea'))]",
+    "storageAccountid": "[concat(resourceGroup().id,'/providers/','Microsoft.Storage/storageAccounts/', variables('storageAccountNameSVC'))]",
+    "consumerGroupName": "[concat(parameters('iotHubName'), '/events/cg1')]"
+  },
+  "resources": [
+    // Creating WebApplications//
+    {
+      "apiVersion": "2018-11-01",
+      "type": "Microsoft.Web/sites",
+      "kind": "app",
+      "name": "[concat(parameters('webApplication')[copyIndex()],'-',parameters('region'),'-',parameters('stagingArea'))]",
+
+      "location": "[parameters('location')]",
+      "copy": {
+        "count": 3,
+        "name": "fnloop"
+      },
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]",
+        "httpsOnly": true
+      },
+
+
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]"
+      ]
+
+    },
+    {
+      "apiVersion": "2018-11-01",
+      "comments": "This specifies the web app slots.",
+      "copy": {
+        "count": "[length(parameters('webApplication'))]",
+        "mode": "Serial",
+        "name": "func-app-copy"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Web/Sites/', parameters('webApplication')[copyIndex()],'-',parameters('region'),'-',parameters('stagingArea'))]"
+      ],
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "kind": "app",
+      "location": "[parameters('location')]",
+      "name": "[concat(parameters('webApplication')[copyIndex()],'-',parameters('region'),'-',parameters('stagingArea'),'/pre-prod')]",
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]",
+        "httpsOnly": true
+      },
+      "type": "Microsoft.Web/sites/slots"
+    },
+
+    {
+      "apiVersion": "2018-11-01",
+      "type": "Microsoft.Web/sites",
+      "kind": "app",
+      "name": "[concat(parameters('webApplication')[copyIndex()],'-',parameters('region'),'-',parameters('stagingArea'),'-','cc')]",
+
+      "location": "[parameters('location')]",
+      "copy": {
+        "count": 3,
+        "name": "fnloop"
+      },
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]",
+        "httpsOnly": true
+      },
+
+
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]"
+      ]
+
+    },
+    {
+      "apiVersion": "2018-11-01",
+      "comments": "This specifies the web app slots.",
+      "copy": {
+        "count": "[length(parameters('webApplication'))]",
+        "mode": "Serial",
+        "name": "func-app-copy"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Web/Sites/', parameters('webApplication')[copyIndex()],'-',parameters('region'),'-',parameters('stagingArea'),'-','cc')]"
+
+      ],
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "kind": "app",
+      "location": "[parameters('location')]",
+      "name": "[concat(parameters('webApplication')[copyIndex()],'-',parameters('region'),'-',parameters('stagingArea'),'-','cc','/pre-prod')]", //'/',parameters('slots')[copyIndex()])]"
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]",
+        "httpsOnly": true
+      },
+      "type": "Microsoft.Web/sites/slots"
+    },
+    {
+      "apiVersion": "2018-11-01",
+      "type": "Microsoft.Web/sites",
+      "kind": "app",
+      "name": "[concat(parameters('webApplication')[copyIndex()],'-',parameters('region'),'-',parameters('stagingArea'),'-','cu')]",
+
+      "location": "[parameters('location')]",
+      "copy": {
+        "count": 3,
+        "name": "fnloop"
+      },
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]",
+        "httpsOnly": true
+      },
+
+
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]"
+      ]
+
+    },
+    {
+      "apiVersion": "2018-11-01",
+      "comments": "This specifies the web app slots.",
+      "copy": {
+        "count": "[length(parameters('webApplication'))]",
+        "mode": "Serial",
+        "name": "func-app-copy"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Web/Sites/', parameters('webApplication')[copyIndex()],'-',parameters('region'),'-',parameters('stagingArea'),'-','cu')]"
+
+      ],
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "kind": "app",
+      "location": "[parameters('location')]",
+      "name": "[concat(parameters('webApplication')[copyIndex()],'-',parameters('region'),'-',parameters('stagingArea'),'-','cu','/pre-prod')]", //'/',parameters('slots')[copyIndex()])]"
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]",
+        "httpsOnly": true
+      },
+      "type": "Microsoft.Web/sites/slots"
+    },
+    {
+      "apiVersion": "2018-11-01",
+      "type": "Microsoft.Web/sites",
+      "kind": "app",
+      "name": "[concat(parameters('webApplicationForNonCloud')[copyIndex()],'-',parameters('region'),'-',parameters('stagingArea'))]",
+
+      "location": "[parameters('location')]",
+      "copy": {
+        "count": 2,
+        "name": "fnloop"
+      },
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]",
+        "httpsOnly": true
+      },
+
+
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]"
+      ]
+
+    },
+    {
+      "apiVersion": "2018-11-01",
+      "comments": "This specifies the web app slots.",
+      "copy": {
+        "count": "[length(parameters('webApplicationForNonCloud'))]",
+        "mode": "Serial",
+        "name": "func-app-copy"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Web/Sites/', parameters('webApplicationForNonCloud')[copyIndex()],'-',parameters('region'),'-',parameters('stagingArea'))]"
+
+      ],
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "kind": "app",
+      "location": "[parameters('location')]",
+      "name": "[concat(parameters('webApplicationForNonCloud')[copyIndex()],'-',parameters('region'),'-',parameters('stagingArea'),'/pre-prod')]", //'/',parameters('slots')[copyIndex()])]"
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]",
+        "httpsOnly": true
+      },
+      "type": "Microsoft.Web/sites/slots"
+    },
+
+    ////Create Function Application //
+    {
+      "apiVersion": "2018-11-01",
+      "type": "Microsoft.Web/sites",
+      "name": "[concat('azfun-',parameters('funappName')[copyIndex()],'-',parameters('region'),'-',parameters('stagingArea'))]",
+      "location": "[parameters('location')]",
+      "kind": "functionapp",
+      "copy": {
+        "name": "siteloop",
+        "count": "[length(parameters('funappName'))]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', variables('ConsumptionPlanName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountNameSVC'))]"
+      ],
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('ConsumptionPlanName'))]",
+        "httpsOnly": true,
+        "siteConfig": {
+          "appSettings": [
+            {
+              "name": "AzureWebJobsStorage",
+              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountNameSVC'), ';AccountKey=', listKeys(variables('storageAccountid'),'2015-05-01-preview').key1)]"
+            },
+            {
+              "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
+              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountNameSVC'), ';AccountKey=', listKeys(variables('storageAccountid'),'2015-05-01-preview').key1)]"
+            },
+            {
+              "name": "WEBSITE_CONTENTSHARE",
+              "value": "[toLower(variables('functionAppName'))]"
+            },
+            {
+              "name": "FUNCTIONS_EXTENSION_VERSION",
+              "value": "~3"
+            },
+            {
+              "name": "WEBSITE_NODE_DEFAULT_VERSION",
+              "value": "~10"
+            },
+            {
+              "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+              "value": "[reference(resourceId('microsoft.insights/components/', parameters('appInsightsName')), '2015-05-01').InstrumentationKey]"
+            },
+            {
+              "name": "FUNCTIONS_WORKER_RUNTIME",
+              "value": "[parameters('functionWorkerRuntime')]"
+            }
+          ]
+        }
+      }
+    },
+
+    {
+      "apiVersion": "2018-11-01",
+      "comments": "This specifies the web app slots.",
+      "copy": {
+        "count": "[length(parameters('funappName'))]",
+        "mode": "Serial",
+        "name": "func-app-copy"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Web/Sites/', concat('azfun-',parameters('funappName')[copyIndex()],'-',parameters('region'),'-',parameters('stagingArea')))]"
+      ],
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "kind": "functionapp",
+      "location": "[parameters('location')]",
+      "name": "[concat('azfun-',parameters('funappName')[copyIndex()],'-',parameters('region'),'-',parameters('stagingArea'),'/pre-prod')]",
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('ConsumptionPlanName'))]",
+        "httpsOnly": true,
+        "siteConfig": {
+          "appSettings": [
+            {
+              "name": "AzureWebJobsStorage",
+              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountNameSVC'), ';AccountKey=', listKeys(variables('storageAccountid'),'2015-05-01-preview').key1)]"
+            },
+            {
+              "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
+              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountNameSVC'), ';AccountKey=', listKeys(variables('storageAccountid'),'2015-05-01-preview').key1)]"
+            },
+            {
+              "name": "WEBSITE_CONTENTSHARE",
+              "value": "[toLower(variables('functionAppName'))]"
+            },
+            {
+              "name": "FUNCTIONS_EXTENSION_VERSION",
+              "value": "~3"
+            },
+            {
+              "name": "WEBSITE_NODE_DEFAULT_VERSION",
+              "value": "~10"
+            },
+            {
+              "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+              "value": "[reference(resourceId('microsoft.insights/components/', parameters('appInsightsName')), '2015-05-01').InstrumentationKey]"
+            },
+            {
+              "name": "FUNCTIONS_WORKER_RUNTIME",
+              "value": "[parameters('functionWorkerRuntime')]"
+            }
+          ]
+        }
+      },
+      "type": "Microsoft.Web/sites/slots"
+    },
+
+    {
+      "apiVersion": "2018-11-01",
+      "type": "Microsoft.Web/sites",
+      "name": "[concat('azfun-',parameters('FunctionAppstandardPlan') ,'-' ,parameters('region'),'-',parameters('stagingArea'))]",
+      "location": "[parameters('location')]",
+      "kind": "functionapp",
+
+
+
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountNameSVC'))]"
+      ],
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]",
+        "httpsOnly": true,
+        "siteConfig": {
+          "appSettings": [
+            {
+              "name": "AzureWebJobsStorage",
+              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountNameSVC'), ';AccountKey=', listKeys(variables('storageAccountid'),'2015-05-01-preview').key1)]"
+            },
+            {
+              "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
+              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountNameSVC'), ';AccountKey=', listKeys(variables('storageAccountid'),'2015-05-01-preview').key1)]"
+            },
+            {
+              "name": "WEBSITE_CONTENTSHARE",
+              "value": "[toLower(variables('functionAppName'))]"
+            },
+            {
+              "name": "FUNCTIONS_EXTENSION_VERSION",
+              "value": "~3"
+            },
+            {
+              "name": "WEBSITE_NODE_DEFAULT_VERSION",
+              "value": "~10"
+            },
+            {
+              "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+              "value": "[reference(resourceId('microsoft.insights/components/', parameters('appInsightsName')), '2015-05-01').InstrumentationKey]"
+            },
+            {
+              "name": "FUNCTIONS_WORKER_RUNTIME",
+              "value": "[parameters('functionWorkerRuntime')]"
+            }
+          ]
+        }
+      }
+    },
+
+    {
+      "apiVersion": "2018-11-01",
+      "comments": "This specifies the web app slots.",
+      "dependsOn": [
+        "[concat('Microsoft.Web/Sites/', concat('azfun-',parameters('FunctionAppstandardPlan') ,'-' ,parameters('region'),'-',parameters('stagingArea')))]"
+      ],
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "kind": "functionapp",
+      "location": "[parameters('location')]",
+      "name": "[concat('azfun-',parameters('FunctionAppstandardPlan') ,'-' ,parameters('region'),'-',parameters('stagingArea'),'/pre-prod')]",
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]",
+        "httpsOnly": true,
+        "siteConfig": {
+          "appSettings": [
+            {
+              "name": "AzureWebJobsStorage",
+              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountNameSVC'), ';AccountKey=', listKeys(variables('storageAccountid'),'2015-05-01-preview').key1)]"
+            },
+            {
+              "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
+              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountNameSVC'), ';AccountKey=', listKeys(variables('storageAccountid'),'2015-05-01-preview').key1)]"
+            },
+            {
+              "name": "WEBSITE_CONTENTSHARE",
+              "value": "[toLower(variables('functionAppName'))]"
+            },
+            {
+              "name": "FUNCTIONS_EXTENSION_VERSION",
+              "value": "~3"
+            },
+            {
+              "name": "WEBSITE_NODE_DEFAULT_VERSION",
+              "value": "~10"
+            },
+            {
+              "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+              "value": "[reference(resourceId('microsoft.insights/components/', parameters('appInsightsName')), '2015-05-01').InstrumentationKey]"
+            },
+            {
+              "name": "FUNCTIONS_WORKER_RUNTIME",
+              "value": "[parameters('functionWorkerRuntime')]"
+            }
+          ]
+        }
+      },
+      "type": "Microsoft.Web/sites/slots"
+    },
+
+    // Creating Batch Account//
+    {
+      "type": "Microsoft.Batch/batchAccounts",
+      "name": "[parameters('batchAccountName')]",
+      "apiVersion": "2017-09-01",
+      "location": "[parameters('location')]",
+
+      "properties": {
+        "autoStorage": {
+          "storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountNameSVC'))]"
+        }
+
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountNameSVC'))]"
+      ]
+    },
+
+    //Creating Storage Account Name with Plan(SVC) Standard/RA-GRS/General PurposeV2(StorageV2) Parameters.//
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[concat(variables('storageAccountNameSVC'))]",
+      "apiVersion": "2018-07-01",
+      "location": "[parameters('location')]",
+      "kind": "StorageV2",
+      "sku": {
+        "name": "[parameters('sku_SVC')]",
+        "tier": "standard"
+      }
+    },
+    //Creating another Storage Account Name(Data) with Plan Premium/LRS/BlockBlobStorage Parameters.//
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[concat(variables('storageAccountNameData'))]",
+      "apiVersion": "2019-04-01",
+      "location": "[parameters('location')]",
+      "kind": "BlockBlobStorage",
+      "sku": {
+        "name": "[parameters('sku_data')]",
+        "tier": "Premium"
+      }
+    },
+    // Creating AppServicePlan for Web Application.//
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2018-02-01",
+      "name": "[variables('appServicePlanName')]",
+      "location": "[parameters('location')]",
+
+
+      "properties": {},
+      "dependsOn": [],
+      "sku": {
+        "name": "[parameters('sku')]"
+      }
+
+    },
+    // Creating Consumption ServicePlan for Function Application.//
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2018-02-01",
+      "name": "[variables('ConsumptionPlanName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Y1",
+        "tier": "Dynamic"
+      },
+      "properties": {
+        "name": "[variables('ConsumptionPlanName')]",
+        "computeMode": "Dynamic"
+      }
+    },
+    // Creating Iot Hub //
+    {
+      "type": "Microsoft.Devices/IotHubs",
+      "apiVersion": "2018-04-01",
+      "name": "[parameters('iotHubName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "eventHubEndpoints": {
+          "events": {
+            "retentionTimeInDays": 1,
+            "partitionCount": 4
+          }
+        },
+        "cloudToDevice": {
+          "defaultTtlAsIso8601": "PT1H",
+          "maxDeliveryCount": 10,
+          "feedback": {
+            "ttlAsIso8601": "PT1H",
+            "lockDurationAsIso8601": "PT60S",
+            "maxDeliveryCount": 10
+          }
+        },
+        "messagingEndpoints": {
+          "fileNotifications": {
+            "ttlAsIso8601": "PT1H",
+            "lockDurationAsIso8601": "PT1M",
+            "maxDeliveryCount": 10
+          }
+        }
+      },
+      "sku": {
+        "name": "[parameters('skuName')]",
+        "capacity": "[parameters('capacityUnits')]"
+      }
+    },
+    {
+      "type": "Microsoft.Devices/iotHubs/eventhubEndpoints/ConsumerGroups",
+      "apiVersion": "2018-04-01",
+      "name": "[variables('consumerGroupName')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Devices/IotHubs', parameters('iotHubName'))]"
+      ]
+    },
+
+
+    // Creating Event Hub //
+    {
+      "apiVersion": "2017-04-01",
+      "name": "[parameters('eventHubNameSpace')]",
+      "type": "Microsoft.EventHub/namespaces",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[parameters('sku_eventHub')]",
+        "tier": "[parameters('sku_eventHub')]",
+        "capacity": "[parameters('skuCapacity_eventHub')]"
+
+
+
+      },
+      "tags": {
+        "tag1": "value1",
+        "tag2": "value2"
+      },
+      "properties": {},
+      "resources": [
+        {
+          "type": "eventhubs",
+          "apiVersion": "2017-04-01",
+          "name": "[parameters('eventHubName2go')]",
+
+
+
+          "dependsOn": [
+            "[concat('Microsoft.EventHub/namespaces/', parameters('eventHubNameSpace'))]"
+          ],
+          "properties": {
+            "messageRetentionInDays": 1,
+            "partitionCount": 4,
+            "status": "Active"
+          },
+
+          "resources": [
+            {
+              "apiVersion": "2017-04-01",
+              "name": "[parameters('consumerGroupName_eventHub')]",
+              "type": "consumergroups",
+              "dependsOn": [
+                "[parameters('eventHubName2go')]"
+              ],
+              "properties": {
+                "userMetadata": "User Metadata goes here"
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    // Creating Signal R service //
+    {
+      "apiVersion": "2018-10-01",
+      "location": "[parameters('location')]",
+      "name": "[parameters('signalRName')]",
+      "type": "Microsoft.SignalRService/SignalR",
+      "kind": "SignalR",
+      "sku": {
+        "capacity": "[parameters('capacity_SignalR')]",
+        "name": "[parameters('sku_SignalR')]"
+      },
+      "properties": {
+
+        "features": [
+          {
+            "flag": "ServiceMode",
+            "value": "[parameters('serviceMode')]"
+          }
+
+
+
+        ]
+      }
+
+
+
+    },
+
+    // Creating Application Insights //
+    {
+      "apiVersion": "2014-04-01",
+      "name": "[parameters('appInsightsName')]",
+      "type": "microsoft.insights/components",
+      "location": "[parameters('location')]",
+      "tags": {
+        "[concat('hidden-link:', resourceGroup().id, '/providers/Microsoft.Web/sites/', parameters('appInsightsName'))]": "Resource"
+      },
+      "properties": {
+        "ApplicationId": "[parameters('appInsightsName')]",
+        "Request_Source": "IbizaWebAppExtensionCreate"
+      }
+    }
+
+
+
+  ],
+
+  "outputs": {
+    "storageAccountName": {
+      "type": "string",
+      "value": "[variables('storageAccountNameSVC')]"
+    },
+    "batchAccountName": {
+      "type": "string",
+      "value": "[parameters('batchAccountName')]"
+    }
+  }
+}
